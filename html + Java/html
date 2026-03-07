@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Etch-a-Sketch</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    /* Perfect square responsive container */
+    #container {
+      display: grid;
+      aspect-ratio: 1 / 1;        /* Always a perfect square */
+      width: min(90vw, 600px);    /* Responsive */
+      border: 2px solid #333;
+      background: white;
+    }
+
+    .square {
+      border: 1px solid #eee;
+      background-color: rgba(0, 0, 0, 0);
+      opacity: 0;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      background: #333;
+      color: white;
+      border-radius: 5px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    .active {
+      background: #0077ff;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Etch-a-Sketch</h1>
+
+  <div class="controls">
+    <button id="resizeBtn">Change Grid Size</button>
+    <button id="clearBtn">Clear Board</button>
+    <button id="colorModeBtn">Random Color Mode</button>
+    <button id="darkenModeBtn">Darken Mode</button>
+    <button id="saveBtn">Save as Image</button>
+  </div>
+
+  <div id="container"></div>
+
+  <script>
+    const container = document.getElementById("container");
+    const resizeBtn = document.getElementById("resizeBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const colorModeBtn = document.getElementById("colorModeBtn");
+    const darkenModeBtn = document.getElementById("darkenModeBtn");
+    const saveBtn = document.getElementById("saveBtn");
+
+    let randomColorMode = false;
+    let darkenMode = false;
+
+    function randomRGB() {
+      return `rgb(${Math.floor(Math.random() * 255)}, 
+                  ${Math.floor(Math.random() * 255)}, 
+                  ${Math.floor(Math.random() * 255)})`;
+    }
+
+    function createGrid(size) {
+      container.innerHTML = "";
+      container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+      container.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+
+      for (let i = 0; i < size * size; i++) {
+        const square = document.createElement("div");
+        square.classList.add("square");
+        square.style.opacity = 0;
+
+        square.addEventListener("mouseenter", () => {
+          if (darkenMode) {
+            let currentOpacity = parseFloat(square.style.opacity);
+            if (currentOpacity < 1) {
+              square.style.opacity = currentOpacity + 0.1;
+              square.style.backgroundColor = "black";
+            }
+          } else if (randomColorMode) {
+            square.style.backgroundColor = randomRGB();
+            square.style.opacity = 1;
+          } else {
+            square.style.backgroundColor = "black";
+            square.style.opacity = 1;
+          }
+        });
+
+        container.appendChild(square);
+      }
+    }
+
+    resizeBtn.addEventListener("click", () => {
+      let newSize = prompt("Enter grid size (1–100):");
+      if (newSize === null) return;
+
+      newSize = parseInt(newSize);
+      if (isNaN(newSize) || newSize < 1 || newSize > 100) {
+        alert("Please enter a valid number between 1 and 100.");
+        return;
+      }
+
+      createGrid(newSize);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      const squares = document.querySelectorAll(".square");
+      squares.forEach(sq => {
+        sq.style.backgroundColor = "rgba(0,0,0,0)";
+        sq.style.opacity = 0;
+      });
+    });
+
+    colorModeBtn.addEventListener("click", () => {
+      randomColorMode = !randomColorMode;
+      colorModeBtn.classList.toggle("active");
+      if (randomColorMode) darkenMode = false;
+      darkenModeBtn.classList.remove("active");
+    });
+
+    darkenModeBtn.addEventListener("click", () => {
+      darkenMode = !darkenMode;
+      darkenModeBtn.classList.toggle("active");
+      if (darkenMode) randomColorMode = false;
+      colorModeBtn.classList.remove("active");
+    });
+
+    saveBtn.addEventListener("click", () => {
+      html2canvas(container).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "etch-a-sketch.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    });
+
+    // Load html2canvas dynamically
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    document.body.appendChild(script);
+
+    /* Default 16×16 grid */
+    createGrid(16);
+  </script>
+
+</body>
+</html>
